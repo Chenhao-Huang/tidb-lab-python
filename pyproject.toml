@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "tidb-lab-python"
+version = "0.1.0"
+description = ""
+authors = ["Cheese <cheese.javaee@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+dotenv = "^0.9.9"
+mysql-connector-python = "^9.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
