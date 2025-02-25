@@ -41,13 +41,13 @@ def _check_result(cursor):
 if __name__ == "__main__":
     with get_connection() as connection:
         print(f"Connected to TiDB: {connection.user}@{connection.server_host}:{connection.server_port}")
-        with connection.cursor(prepared=True) as cursor:
+        with connection.cursor() as cursor:
             # Batching
-            _batch_style_insert(cursor, 10000)
+            _batch_style_insert(cursor, 1000)
             connection.commit()
             _check_result(cursor)
 
             # Non-Batching
-            _non_batch_style_insert(cursor, 10000)
+            _non_batch_style_insert(cursor, 1000)
             connection.commit()
             _check_result(cursor)
