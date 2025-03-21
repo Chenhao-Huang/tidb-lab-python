@@ -56,15 +56,26 @@ def insert_record(connection, cursor, insert_stmt, round_num):
         # Check if it's error code 8028 (schema mutation)
         if err.errno == 8028:
             print("Schema mutation encountered, retrying...")
-            try:
-                # Retry the operation
-                cursor.execute(insert_stmt, (round_num, ))
-                time.sleep(1)
-                connection.commit()
-                return True
-            except mysql.connector.Error as retry_err:
-                print(f"Retry failed: {retry_err}")
-                return False
+            retry_attempts = 0
+            max_retries = 5
+            backoff_time = 1  # Start with 1 second backoff
+            while retry_attempts < max_retries:
+                try:
+                    time.sleep(backoff_time)
+                    cursor.execute(insert_stmt, (round_num, ))
+                    time.sleep(1)
+                    connection.commit()
+                    return True
+                except mysql.connector.Error as retry_err:
+                    if retry_err.errno == 8028:
+                        retry_attempts += 1
+                        backoff_time *= 2  # Exponential backoff
+                        print(f"Retry {retry_attempts} failed: {retry_err}. Retrying in {backoff_time} seconds...")
+                    else:
+                        print(f"Retry failed with different error: {retry_err}")
+                        return False
+            print("Max retries reached. Moving to next record.")
+            return False
         else:
             # Handle other MySQL errors
             print(f"Error: {err}")
