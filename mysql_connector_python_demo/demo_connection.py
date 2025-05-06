@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 
 import mysql.connector
 from mysql.connector import MySQLConnection
+from mysql.connector import errorcode
+
 
 def get_connection(autocommit: bool = True) -> MySQLConnection:
     load_dotenv()
@@ -22,7 +24,22 @@ def get_connection(autocommit: bool = True) -> MySQLConnection:
         "use_pure": True,
     }
 
-    return  mysql.connector.connect(**db_conf)
+    try:
+        return mysql.connector.connect(**db_conf)
+    except mysql.connector.Error as e:
+        if e.errno == errorcode.ER_BAD_DB_ERROR:
+            temp_db_conf = db_conf.copy()
+            database = temp_db_conf["database"]
+            del temp_db_conf["database"]
+            with mysql.connector.connect(**temp_db_conf) as temp_conn:
+                with temp_conn.cursor() as temp_cursor:
+                    print(f"Create database {database}")
+                    temp_cursor.execute(
+                        f"CREATE DATABASE IF NOT EXISTS `{database}`"
+                    )
+            return mysql.connector.connect(**db_conf)
+        else:
+            raise e
 
 
 if __name__ == "__main__":
